@@ -1,7 +1,6 @@
 package evaluator
 
 import (
-	"monkey/ast"
 	"monkey/lexer"
 	"monkey/object"
 	"monkey/parser"
@@ -23,34 +22,6 @@ func TestEvalIntegerExpression(t *testing.T) {
 	}
 }
 
-func Eval(node ast.Node) object.Object {
-	switch node := node.(type) {
-
-	// Statements
-	case *ast.Program:
-		return evalStatements(node.Statements)
-
-	case *ast.ExpressionStatement:
-		return Eval(node.Expression)
-
-	// Expressions
-	case *ast.IntegerLiteral:
-		return &object.Integer{Value: node.Value}
-	}
-
-	return nil
-}
-
-func evalStatements(stmts []ast.Statement) object.Object {
-	var result object.Object
-
-	for _, statement := range stmts {
-		result = Eval(statement)
-	}
-
-	return result
-}
-
 func testEval(input string) object.Object {
 	l := lexer.New(input)
 	p := parser.New(l)
@@ -66,6 +37,34 @@ func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {
 	}
 	if result.Value != expected {
 		t.Errorf("object has wrong value. got=%d, want=%d", result.Value, expected)
+		return false
+	}
+	return true
+}
+
+func TestEvalBooleanExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		{"true", true},
+		{"false", false},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testBooleanObject(t, evaluated, tt.expected)
+	}
+}
+
+func testBooleanObject(t *testing.T, obj object.Object, expected bool) bool {
+	result, ok := obj.(*object.Boolean)
+	if !ok {
+		t.Errorf("obj is not Boolean. got=%T(%+v)", obj, obj)
+		return false
+	}
+	if result.Value != expected {
+		t.Errorf("object has wrong value. got=%t, want=%t", result.Value, expected)
 		return false
 	}
 	return true
